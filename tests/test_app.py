@@ -2,5 +2,5 @@ from app import index
 
 
 def test_index():
-    assert index() == "Hello This is testing For auto deployment !"
+    assert index() == "Hello This is testing !"
 
