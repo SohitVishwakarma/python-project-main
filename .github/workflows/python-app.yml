@@ -13,7 +13,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Cache dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v3
@@ -23,7 +32,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest
+          pip install flake8 pytest pytest-cov
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Lint with flake8
@@ -33,19 +42,20 @@ jobs:
           # Exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      - name: Test with pytest
+      - name: Test with pytest and coverage
         run: |
-          export PYTHONPATH=src
-          pytest
+          pytest --cov=src --cov-report=xml
+          coverage report -m
 
-  build_and_deploy:
+  deploy:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - name: Deploy application
+      - name: Deploy to production
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         run: |
-          # Add commands to deploy the application after successful build
-          echo "Deploying the application..."
+          # Add deployment commands here
+          echo "Deploying to production..."
 
   additional_tests:
     runs-on: ubuntu-latest
@@ -55,4 +65,3 @@ jobs:
         run: |
           # Add any additional tests here
           echo "Running additional tests..."
-
